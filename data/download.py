@@ -9,7 +9,7 @@ main_dir = os.getcwd()
 years = [str(i) for i in range(1980, 2020, 2)]
 data_prefixes = ['cm', 'cn', 'ccl', 'oth', 'pas2', 'indiv'] #operating expenditures are ignored
 web_source = 'ftp://ftp.fec.gov/FEC'
-data_dir = main_dir + '/data'
+data_dir = main_dir + '/fec'
 
 if not os.path.exists(data_dir):
 	os.mkdir(data_dir)
@@ -18,7 +18,7 @@ urls = []
 filenames = []
 for year in years:
 	for prefix in data_prefixes:
-		if prefix != 'ccl' or int(year) >= 2000:
+		if prefix != 'ccl' or int(year) >= 2000: #CCL only exists after 2000
 			urls.append(web_source + '/' + year + '/' + prefix + year[2:] + '.zip')
 			filenames.append(prefix + year[2:])
 print filenames
