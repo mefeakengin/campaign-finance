@@ -6,22 +6,23 @@ import gzip
 main_dir = os.getcwd()
 
 # populate data links of format ftp://ftp.fec.gov/FEC/2018/cm18.zip
-years = [str(i) for i in range(1980, 2020, 2)]
-data_prefixes = ['cm', 'cn', 'ccl', 'oth', 'pas2', 'indiv'] #operating expenditures are ignored
-web_source = 'ftp://ftp.fec.gov/FEC'
-data_dir = main_dir + '/fec'
+def setup_paths():
+	years = [str(i) for i in range(1980, 2020, 2)]
+	data_prefixes = ['cm', 'cn', 'ccl', 'oth', 'pas2', 'indiv'] #operating expenditures are ignored
+	web_source = 'ftp://ftp.fec.gov/FEC'
+	data_dir = main_dir + '/fec'
 
-if not os.path.exists(data_dir):
-	os.mkdir(data_dir)
+	if not os.path.exists(data_dir):
+		os.mkdir(data_dir)
 
-urls = []
-filenames = []
-for year in years:
-	for prefix in data_prefixes:
-		if prefix != 'ccl' or int(year) >= 2000: #CCL only exists after 2000
-			urls.append(web_source + '/' + year + '/' + prefix + year[2:] + '.zip')
-			filenames.append(prefix + year[2:])
-print filenames
+	urls = []
+	filenames = []
+	for year in years:
+		for prefix in data_prefixes:
+			if prefix != 'ccl' or int(year) >= 2000: #CCL only exists after 2000
+				urls.append(web_source + '/' + year + '/' + prefix + year[2:] + '.zip')
+				filenames.append(prefix + year[2:])
+	print filenames
 
 #Download and write the file
 def download_file(url, path):
@@ -45,34 +46,28 @@ def clean_file(path):
 	os.system("iconv -f iso-8859-1 -t utf-8 < " + path + " > " + temp_path)
 	os.system("mv " + temp_path + " " + temp_path[:-5] + ".txt")
 
-Download and extract all files
-for i in range(0, len(urls)):
-	url = urls[i]
-	filename = filenames[i]
-	print url
-	print filename
-	final_path = data_dir + '/' + filename 
-	download_path = final_path + '.zip'
-	download_file(url, download_path)
-	extract_file(download_path, final_path)
-	clean_file(final_path)
-	os.remove(download_path)
-	print "File " + filename + " is ready"
-
-# files_to_clean = ['indiv12.txt', 'indiv14.txt', 'indiv16.txt']
+# files_to_clean = filenames
 # for filename in files_to_clean:
 # 	final_path = data_dir + '/' + filename 
 # 	clean_file(final_path)
 # 	print "File " + filename + " is cleaned"
 
-# for url in urls:
-#     try:
-#         urllib.request.urlretrieve(url, filename)
-#         sourceZip = zipfile.ZipFile(filename, 'r')
-#         break
-#     except ValueError:
-#         pass
+def main():
+	setup_paths()
+	# Download and extract all files
+	for i in range(0, len(urls)):
+		url = urls[i]
+		filename = filenames[i]
+		print url
+		print filename
+		final_path = data_dir + '/' + filename 
+		download_path = final_path + '.zip'
+		download_file(url, download_path)
+		extract_file(download_path, final_path)
+		clean_file(final_path)
+		os.remove(download_path)
+		print "File " + filename + " is ready"
+	
 
-# for name in sourceZip.namelist():
-#     sourceZip.extract(name, destinationPath)
-# sourceZip.close()
+if __name__ == '__main__':
+    main()

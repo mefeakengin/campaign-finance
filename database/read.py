@@ -180,9 +180,6 @@ def create_individual_contribution_table(paths):
 	conn.commit()
 	conn.close()
 
-	row_without_date_count = 0 #Count how many of the lines don't have a transaction date
-	row_with_date_count = 0 #Count how many of the lines have a transaction date
-
 	for path in paths:
 		election_cycle = path[len(path)-6:len(path)-4] # Assuming the path ends in format like ../indiv90.txt
 		conn = connect()
@@ -212,26 +209,14 @@ def create_individual_contribution_table(paths):
 				(NAME, CITY, STATE, ZIP_CODE, EMPLOYER, OCCUPATION, COMMITTEE_ID, TRAN_DATE, \
 					TRAN_AMOUNT, TRAN_TYPE, ELECTION_TYPE, REPORT_TYPE) \
 		      	VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-			try:
-				cur.execute(query, values_list)
-			except Exception as exc:
-				print "Values list ", values_list
-				break
-			# finally:
-				# print "Finally values list ", values_list
+			cur.execute(query, values_list)
 
 			if i%100000 == 0:
 				print i
-		
-		print "Rows without dates: " + str(row_without_date_count)
-		print "Rows with dates: " + str(row_with_date_count)
 
 		conn.commit()
 		conn.close()
 		print "Insertion for the file completed: ", path
-
-	conn.commit()
-	conn.close()
 
 
 def create_committee_candidate_contribution_table(paths):
@@ -373,7 +358,7 @@ def create_tables():
 	# committee_candidate_paths = [(data_dir + 'pas2' + str(i)[2:] + '.txt') for i in range(1980, 2020, 2)]
 	# create_committee_candidate_contribution_table(committee_candidate_paths)
 
-	individual_paths = [(data_dir + 'indiv' + str(i)[2:] + '.txt') for i in range(2012, 2014, 2)]
+	individual_paths = [(data_dir + 'indiv' + str(i)[2:] + '.txt') for i in range(2014, 2020, 2)]
 	create_individual_contribution_table(individual_paths)
 
 	# committee_committee_paths = [(data_dir + 'oth' + str(i)[2:] + '.txt') for i in range(1980, 2020, 2)]
