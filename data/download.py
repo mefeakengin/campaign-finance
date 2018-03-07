@@ -39,7 +39,13 @@ def extract_file(source_path, extract_path):
 			f.write(zf.read(zf.namelist()[0]))
 	return
 
-# Download and extract all files
+# fix the character issues of the files, particularly issues with UTF8 characters.
+def clean_file(path):
+	temp_path = path[:-4] + ".temp"
+	os.system("iconv -f iso-8859-1 -t utf-8 < " + path + " > " + temp_path)
+	os.system("mv " + temp_path + " " + temp_path[:-5] + ".txt")
+
+Download and extract all files
 for i in range(0, len(urls)):
 	url = urls[i]
 	filename = filenames[i]
@@ -49,8 +55,15 @@ for i in range(0, len(urls)):
 	download_path = final_path + '.zip'
 	download_file(url, download_path)
 	extract_file(download_path, final_path)
+	clean_file(final_path)
 	os.remove(download_path)
 	print "File " + filename + " is ready"
+
+# files_to_clean = ['indiv12.txt', 'indiv14.txt', 'indiv16.txt']
+# for filename in files_to_clean:
+# 	final_path = data_dir + '/' + filename 
+# 	clean_file(final_path)
+# 	print "File " + filename + " is cleaned"
 
 # for url in urls:
 #     try:

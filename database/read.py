@@ -10,6 +10,7 @@ def read_files(file_paths):
 		print "Length of new lines from path " + path + " " + str(len(new_lines))
 		lines.extend(new_lines)
 	return [[line.split('|')[i] for line in lines] for i in range(len(lines[0].split('|')))]
+	# return [[line.split('|')[i].decode('utf-8').encode("ascii","ignore") for line in lines] for i in range(len(lines[0].split('|')))]
 
 # Connect to the database
 def connect():
@@ -171,7 +172,6 @@ def create_individual_contribution_table(paths):
 	      OCCUPATION				CHAR(38),
 	      COMMITTEE_ID				CHAR(9),
 	      TRAN_DATE					DATE,
-	      TRAN_DATE_EXISTS			BOOLEAN,
 	      TRAN_AMOUNT 				NUMERIC(14,2),
 	      TRAN_TYPE 				CHAR(3),
 	      ELECTION_TYPE 			CHAR(1),
@@ -198,20 +198,8 @@ def create_individual_contribution_table(paths):
 			EMPLOYER = individual[EMPLOYER_POS][i]
 			OCCUPATION = individual[OCCUPATION_POS][i]
 			CMTE_ID = individual[CMTE_ID_POS][i]
-
-			# Seems like the number of rows without date is 0, so this logic is skipped.
-			if len(individual[TRAN_DATE_POS][i]) == 0: # If no data or TRAN_DATE skewed, register the election_cycle
-				if election_cycle >= '70': # This means the election_cycle is in 1900s
-					TRAN_DATE = '19' + election_cycle + '-01-01'
-				elif election_cycle < '30': # This means the election_cycle is in 2000s
-					TRAN_DATE = '20' + election_cycle + '-01-01'
-				row_without_date_count += 1
-				TRAN_DATE_EXISTS = "TRUE"
-			else:
+			if len(individual[TRAN_DATE_POS][i]) == 8: # If no data or TRAN_DATE skewed, remove the data point.
 				TRAN_DATE = str(individual[TRAN_DATE_POS][i][4:]) + '-' + str(individual[TRAN_DATE_POS][i][0:2]) + '-' + str(individual[TRAN_DATE_POS][i][2:4])
-				row_with_date_count += 1
-				TRAN_DATE_EXISTS = "FALSE"
-
 			TRAN_AMOUNT = individual[TRAN_AMOUNT_POS][i]		
 			TRAN_TYPE = individual[TRAN_TYPE_POS][i]
 			ELECTION_TYPE = individual[ELECTION_TYPE_POS][i]
@@ -219,12 +207,18 @@ def create_individual_contribution_table(paths):
 				ELECTION_TYPE = ELECTION_TYPE[0]
 			REPORT_TYPE = individual[REPORT_TYPE_POS][i]
 			values_list = [NAME, CITY, STATE, ZIP_CODE, EMPLOYER, OCCUPATION,
-				CMTE_ID, TRAN_DATE, TRAN_DATE_EXISTS, TRAN_AMOUNT, TRAN_TYPE, ELECTION_TYPE, REPORT_TYPE]
+				CMTE_ID, TRAN_DATE, TRAN_AMOUNT, TRAN_TYPE, ELECTION_TYPE, REPORT_TYPE]
 			query = "INSERT INTO INDIVIDUAL \
 				(NAME, CITY, STATE, ZIP_CODE, EMPLOYER, OCCUPATION, COMMITTEE_ID, TRAN_DATE, \
-					TRAN_DATE_EXISTS, TRAN_AMOUNT, TRAN_TYPE, ELECTION_TYPE, REPORT_TYPE) \
-		      	VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-			cur.execute(query, values_list)
+					TRAN_AMOUNT, TRAN_TYPE, ELECTION_TYPE, REPORT_TYPE) \
+		      	VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+			try:
+				cur.execute(query, values_list)
+			except Exception as exc:
+				print "Values list ", values_list
+				break
+			# finally:
+				# print "Finally values list ", values_list
 
 			if i%100000 == 0:
 				print i
@@ -352,7 +346,13 @@ def create_committee_committee_table(paths):
 				(CMTE_CONTRIBUTED_ID,CMTE_CONTRIBUTOR_ID,CMTE_CONTRIBUTOR_NAME,\
 					TRAN_DATE,TRAN_AMOUNT,TRAN_TYPE) \
 		      	VALUES (%s, %s, %s, %s, %s, %s)"
-			cur.execute(query, values_list)
+			try:
+				print "Values to execute", values_list
+				cur.execute(query, values_list)
+			except Exception as exc:
+				print "Values list ", values_list
+			finally:
+				print "Finally values list ", values_list
 
 			if i%100000 == 0:
 				print i
@@ -373,7 +373,7 @@ def create_tables():
 	# committee_candidate_paths = [(data_dir + 'pas2' + str(i)[2:] + '.txt') for i in range(1980, 2020, 2)]
 	# create_committee_candidate_contribution_table(committee_candidate_paths)
 
-	individual_paths = [(data_dir + 'indiv' + str(i)[2:] + '.txt') for i in range(1996, 2020, 2)]
+	individual_paths = [(data_dir + 'indiv' + str(i)[2:] + '.txt') for i in range(2012, 2014, 2)]
 	create_individual_contribution_table(individual_paths)
 
 	# committee_committee_paths = [(data_dir + 'oth' + str(i)[2:] + '.txt') for i in range(1980, 2020, 2)]
