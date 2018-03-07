@@ -263,7 +263,6 @@ def create_committee_candidate_contribution_table(paths):
 			CAND_ID = committee_to_candidate[CAND_ID_POS][i]
 			if len(committee_to_candidate[TRAN_DATE_POS][i]) == 0: # In case there is no data
 				dateless_count += 1
-				print "dateless_counts " + str(dateless_count)
 				continue
 			TRAN_DATE = str(committee_to_candidate[TRAN_DATE_POS][i][4:]) + '-' + str(committee_to_candidate[TRAN_DATE_POS][i][0:2]) + '-' + str(committee_to_candidate[TRAN_DATE_POS][i][2:4])
 			TRAN_AMOUNT = committee_to_candidate[TRAN_AMOUNT_POS][i]
@@ -284,17 +283,24 @@ def create_committee_candidate_contribution_table(paths):
 
 		conn.commit()
 		conn.close()
+
+		print "Rows without dates are removed. Number of rows without a date is: " + str(dateless_count)
 		print "Insertion for the file completed: ", path
 
 
 def create_committee_committee_table(paths):
 
+	'''Create the Candidate Committee Contribution'''
 	CMTE_CONTRIBUTED_ID_POS = 16
 	CMTE_CONTRIBUTOR_ID_POS = 1
 	CMTE_CONTRIBUTOR_NAME_POS = 8
 	TRAN_DATE_POS = 14
 	TRAN_AMOUNT_POS = 15
 	TRAN_TYPE_POS = 6
+
+	# Connect to the database
+	conn = connect()
+	cur = conn.cursor()
 
 	cur.execute("DROP TABLE IF EXISTS COMMITTEE_TO_COMMITTEE;")
 	cur.execute('''CREATE TABLE COMMITTEE_TO_COMMITTEE
@@ -303,7 +309,7 @@ def create_committee_committee_table(paths):
 	      CMTE_CONTRIBUTOR_NAME	 	TEXT	     			NOT NULL,
 	      TRAN_DATE		    		DATE,
 	      TRAN_AMOUNT				NUMERIC(14,2),
-	      TRAN_TYPE					CHAR(3);''')
+	      TRAN_TYPE					CHAR(3));''')
 	print "Table created successfully"
 	conn.commit()
 	conn.close()
@@ -315,57 +321,53 @@ def create_committee_committee_table(paths):
 		committee_to_committee = read_files([path])
 		committee_to_committee.insert(0, [])
 		for i in range(len(committee_to_committee[1])):
-			CMTE_CONTRIBUTED_ID = committee_to_committee[CMTE_CONTRIBUTED_ID][i]
-			CMTE_CONTRIBUTOR_ID = committee_to_committee[CMTE_CONTRIBUTOR_ID][i]
-			CMTE_CONTRIBUTOR_NAME = committee_to_committee[CMTE_CONTRIBUTOR_NAME][i]
+			CMTE_CONTRIBUTED_ID = committee_to_committee[CMTE_CONTRIBUTED_ID_POS][i]
+			CMTE_CONTRIBUTOR_ID = committee_to_committee[CMTE_CONTRIBUTOR_ID_POS][i]
+			CMTE_CONTRIBUTOR_NAME = committee_to_committee[CMTE_CONTRIBUTOR_NAME_POS][i]
 			if len(committee_to_committee[TRAN_DATE_POS][i]) == 0: # In case there is no data
 				dateless_count += 1
-				print "dateless_counts " + str(dateless_count)
 				continue
-			TRAN_DATE = str(committee_to_committee[TRAN_DATE_POS][i][4:]) + '-' + str(committee_to_committee[TRAN_DATE_POS][i][0:2]) + '-' + str(committee_to_candidate[TRAN_DATE_POS][i][2:4])
+			TRAN_DATE = str(committee_to_committee[TRAN_DATE_POS][i][4:]) + '-' + \
+				str(committee_to_committee[TRAN_DATE_POS][i][0:2]) + '-' + str(committee_to_committee[TRAN_DATE_POS][i][2:4])
 			TRAN_AMOUNT = committee_to_committee[TRAN_AMOUNT_POS][i]
 			TRAN_TYPE = committee_to_committee[TRAN_TYPE_POS][i]
 			values_list = [CMTE_CONTRIBUTED_ID, CMTE_CONTRIBUTOR_ID, CMTE_CONTRIBUTOR_NAME,
 				TRAN_DATE, TRAN_AMOUNT, TRAN_TYPE]
-			query = "INSERT INTO COMMITTEE_TO_CANDIDATE \
+			query = "INSERT INTO COMMITTEE_TO_COMMITTEE \
 				(CMTE_CONTRIBUTED_ID,CMTE_CONTRIBUTOR_ID,CMTE_CONTRIBUTOR_NAME,\
 					TRAN_DATE,TRAN_AMOUNT,TRAN_TYPE) \
 		      	VALUES (%s, %s, %s, %s, %s, %s)"
-			try:
-				print "Values to execute", values_list
-				cur.execute(query, values_list)
-			except Exception as exc:
-				print "Values list ", values_list
-			finally:
-				print "Finally values list ", values_list
+			
+			cur.execute(query, values_list)
 
 			if i%100000 == 0:
 				print i
 
 		conn.commit()
 		conn.close()
+
+		print "Rows without dates are removed. Number of rows without a date is: " + str(dateless_count)
 		print "Insertion for the file completed: ", path
 
 
 def create_tables():
 	# Creating Tables
-	# candidate_paths = [(data_dir + 'cn' + str(i)[2:] + '.txt') for i in range(1980, 2020, 2)]
-	# create_candidate_table(candidate_paths)
+	candidate_paths = [(data_dir + 'cn' + str(i)[2:] + '.txt') for i in range(1980, 2020, 2)]
+	create_candidate_table(candidate_paths)
 
-	# committee_paths = [(data_dir + 'cm' + str(i)[2:] + '.txt') for i in range(1980, 2020, 2)]
-	# create_committee_table(committee_paths)
+	committee_paths = [(data_dir + 'cm' + str(i)[2:] + '.txt') for i in range(1980, 2020, 2)]
+	create_committee_table(committee_paths)
 
-	# committee_candidate_paths = [(data_dir + 'pas2' + str(i)[2:] + '.txt') for i in range(1980, 2020, 2)]
-	# create_committee_candidate_contribution_table(committee_candidate_paths)
-
-	individual_paths = [(data_dir + 'indiv' + str(i)[2:] + '.txt') for i in range(2014, 2020, 2)]
+	individual_paths = [(data_dir + 'indiv' + str(i)[2:] + '.txt') for i in range(1980, 2020, 2)]
 	create_individual_contribution_table(individual_paths)
 
-	# committee_committee_paths = [(data_dir + 'oth' + str(i)[2:] + '.txt') for i in range(1980, 2020, 2)]
-	# create_committee_candidate_contribution_table(committee_committee_paths)
+	committee_candidate_paths = [(data_dir + 'pas2' + str(i)[2:] + '.txt') for i in range(1980, 2020, 2)]
+	create_committee_candidate_contribution_table(committee_candidate_paths)
+
+	committee_committee_paths = [(data_dir + 'oth' + str(i)[2:] + '.txt') for i in range(1980, 2020, 2)]
+	create_committee_committee_table(committee_committee_paths)
 
 def main():
-	# delete_table(connect(), "CANDIDATE")
 	create_tables()
 	
 

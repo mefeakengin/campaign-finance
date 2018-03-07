@@ -36,8 +36,8 @@ main_dir = os.getcwd()
 # populate data links of format ftp://ftp.fec.gov/FEC/2018/cm18.zip
 years = [str(i) for i in range(1980, 2020, 2)]
 data_prefixes = ['cm', 'cn', 'ccl', 'oth', 'pas2', 'indiv'] #operating expenditures are ignored
-web_source = 'ftp://ftp.fec.gov/FEC'
-data_dir = main_dir + 'data/fec'
+web_source = 'https://cg-519a459a-0ea3-42c2-b7bc-fa1143481f74.s3-us-gov-west-1.amazonaws.com/bulk-downloads'
+data_dir = main_dir + '/data/fec'
 
 if not os.path.exists(data_dir):
 	os.mkdir(data_dir)
