@@ -21,9 +21,9 @@ def extract_file(source_path, extract_path):
 
 # fix the character issues of the files, particularly issues with UTF8 characters.
 def clean_file(path):
-	temp_path = path[:-4] + ".temp"
+	temp_path = path + ".temp"
 	os.system("iconv -f iso-8859-1 -t utf-8 < " + path + " > " + temp_path)
-	os.system("mv " + temp_path + " " + temp_path[:-5] + ".txt")
+	os.system("mv " + temp_path + " " path)
 
 # files_to_clean = filenames
 # for filename in files_to_clean:
