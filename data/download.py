@@ -48,7 +48,7 @@ for year in years:
 	for prefix in data_prefixes:
 		if prefix != 'ccl' or int(year) >= 2000: #CCL only exists after 2000
 			urls.append(web_source + '/' + year + '/' + prefix + year[2:] + '.zip')
-			filenames.append(prefix + year[2:])
+			filenames.append(prefix + year[2:] + '.txt')
 print filenames
 
 # Download and extract all files
