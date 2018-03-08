@@ -1,0 +1,6 @@
+[client]
+database = testdb
+user = mefeakengin
+password = xyz
+hostname = localhost
+port = 5432

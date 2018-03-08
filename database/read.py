@@ -1,3 +1,4 @@
+import ConfigParser
 import psycopg2
 data_dir = '../data/fec/'
 
@@ -14,9 +15,16 @@ def read_files(file_paths):
 
 # Connect to the database
 def connect():
-	# Connect to the database
-	conn = psycopg2.connect(database="testdb", user = "mefeakengin", password = "xyz", host = "localhost", port = "5432")
-	print "Opened database successfully"
+	# Read configurations from file
+	config = ConfigParser.ConfigParser()
+	config.read("dbconfig.cnf")
+	database = config.get('client', 'database')
+	user = config.get('client', 'user')
+	password = config.get('client', 'password')
+	hostname = config.get('client', 'hostname')
+	port = config.get('client', 'port')
+	conn = psycopg2.connect(database=database, user = user, password = password, host = hostname, port = port)
+	print "Opened database " + database
 	return conn
 
 
@@ -24,7 +32,7 @@ def delete_table(connection, table_name):
 	# Connect to the database
 	cur = connection.cursor()
 	cur.execute('DROP TABLE ' + table_name)
-	print "Deleted table successfully"
+	print "Deleted table " + table_name
 	connection.commit()
 	connection.close()
 	return connection
