@@ -1,6 +1,7 @@
 import ConfigParser
 import psycopg2
-data_dir = '../data/fec/'
+main_dir = os.getcwd()
+data_dir = 'data/fec/'
 
 # Read files:
 def read_files(file_paths):
@@ -17,7 +18,7 @@ def read_files(file_paths):
 def connect():
 	# Read configurations from file
 	config = ConfigParser.ConfigParser()
-	config.read("dbconfig.cnf")
+	config.read(main_dir + "/database/dbconfig.cnf")
 	database = config.get('client', 'database')
 	user = config.get('client', 'user')
 	password = config.get('client', 'password')
