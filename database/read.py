@@ -1,5 +1,6 @@
 import ConfigParser
 import psycopg2
+import os
 main_dir = os.getcwd()
 data_dir = 'data/fec/'
 
