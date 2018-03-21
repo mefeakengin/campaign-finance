@@ -115,10 +115,10 @@ def create_committee_table(paths):
 	committee.insert(0, [])
 	CMTE_ID_POS = 1
 	CMTE_NM_POS = 2
-	CMTE_DSGN = 9
-	CMTE_TP = 10
-	CMTE_PTY_AFFILIATION = 11
-	ORG_TP = 13
+	CMTE_DSGN_POS = 9
+	CMTE_TP_POS = 10
+	CMTE_PTY_AFFILIATION_POS = 11
+	ORG_TP_POS = 13
 
 	cur.execute("DROP TABLE IF EXISTS COMMITTEE;")
 	cur.execute('''CREATE TABLE COMMITTEE
@@ -133,10 +133,10 @@ def create_committee_table(paths):
 	for i in range(len(committee[1])):
 		ID = committee[CMTE_ID_POS][i]
 		NAME = committee[CMTE_NM_POS][i]
-		DESIGNATION = committee[CMTE_DSGN][i]
-		TYPE = committee[CMTE_TP][i]
-		PARTY = committee[CMTE_PTY_AFFILIATION][i]
-		ORG_TYPE = committee[ORG_TP][i]
+		DESIGNATION = committee[CMTE_DSGN_POS][i]
+		TYPE = committee[CMTE_TP_POS][i]
+		PARTY = committee[CMTE_PTY_AFFILIATION_POS][i]
+		ORG_TYPE = committee[ORG_TP_POS][i]
 		values_list = [ID, NAME, DESIGNATION, TYPE, PARTY, ORG_TYPE]
 		query = "INSERT INTO COMMITTEE (ID,NAME,DESIGNATION,TYPE,PARTY,ORG_TYPE) \
 	      	VALUES (%s, %s, %s, %s, %s, %s)"
@@ -287,9 +287,9 @@ def create_committee_candidate_contribution_table(paths):
 				(CMTE_ID,CMTE_NAME,CAND_ID,TRAN_DATE,TRAN_AMOUNT,TRAN_TYPE,ELECTION_TYPE) \
 		      	VALUES (%s, %s, %s, %s, %s, %s, %s)"
 			cur.execute(query, values_list)
-
 			if i%100000 == 0:
-				print i
+			
+	print i
 
 		conn.commit()
 		conn.close()
@@ -300,7 +300,7 @@ def create_committee_candidate_contribution_table(paths):
 
 def create_committee_committee_table(paths):
 
-	'''Create the Candidate Committee Contribution'''
+	'''Create the Committee Committee Contribution'''
 	CMTE_CONTRIBUTED_ID_POS = 16
 	CMTE_CONTRIBUTOR_ID_POS = 1
 	CMTE_CONTRIBUTOR_NAME_POS = 8
