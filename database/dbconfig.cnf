@@ -1,6 +1,6 @@
 [client]
-database = testdb
-user = mefeakengin
+database = campaign-finance
+user = postgres
 password = xyz
 hostname = localhost
 port = 5432
