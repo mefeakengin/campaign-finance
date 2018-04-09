@@ -778,8 +778,8 @@ def create_employer_table(paths):
 # committee_committee_paths = [(data_dir + 'oth' + str(i)[2:] + '.txt') for i in range(1980, 2020, 2)]
 # create_committee_committee_table(committee_committee_paths)
 
-# corporate_path = '../data' + '/corporate_pac.csv'
+# corporate_path = '../data' + '/corporate.csv'
 # create_corporate_table([corp_pac_path])
 
-employer_path = '../data' + '/empl_1980_2014_gvkey_match.csv'
+employer_path = '../data' + '/empl_1980_2014_gvkey_match_fixed.csv'
 create_employer_table([employer_path])
