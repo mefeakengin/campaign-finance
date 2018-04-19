@@ -3,6 +3,7 @@ import csv
 import psycopg2
 import os
 import sys
+import re
 
 main_dir = os.getcwd()
 # data_dir = main_dir + '/data/fec/'
@@ -10,15 +11,14 @@ data_dir = '../data/fec/'
 # csv.field_size_limit(sys.maxsize)
 
 # Read files returns the rows in the txt in a processed way
-def read_files(file_paths):
+def read_txt_files(file_paths, delimiter='|'):
     lines = []
     for path in file_paths:
         f = open(path, 'r')
         new_lines = f.readlines()
         print "Length of new lines from path " + path + " " + str(len(new_lines))
         lines.extend(new_lines)
-    return [[line.split('|')[i].strip() for line in lines] for i in range(len(lines[0].split('|')))]
-    # return [[line.split('|')[i].decode('utf-8').encode("ascii","ignore") for line in lines] for i in range(len(lines[0].split('|')))]
+    return [[line.split(delimiter)[i].strip() for line in lines] for i in range(len(lines[0].split('|')))]
 
 
 # Returns the raw lines from the txt file
@@ -83,7 +83,7 @@ def create_database(dbname):
 
 def create_candidate_table(paths):
 
-    candidate = read_files(paths)
+    candidate = read_txt_files(paths, "|")
 
     # Positions from the data read according to the headers
     candidate.insert(0, [])
@@ -161,7 +161,7 @@ def create_candidate_table(paths):
 
 def create_committee_table(paths):
 
-    committee = read_files(paths)
+    committee = read_txt_files(paths)
 
     # Connect to the database
     conn = connect()
@@ -313,134 +313,6 @@ def create_individual_contribution_table(paths):
     conn.close()
 
 
-# def create_individual_contribution_table(paths):
-#
-#     '''Create the Individual Contribution Table'''
-#
-#     # Positions according to the header file
-#     # INDV_ID: TODO: Can we have an individual ID at some point
-#     CMTE_ID_POS = 1
-#     AMNDT_IND_POS = 2
-#     REPORT_TYPE_POS = 3
-#     TRAN_PGI_POS = 4 #indicates the election for which the contribution was made.
-#     IMAGE_NUM_POS = 5
-#     TRAN_TYPE_POS = 6
-#     ENTITY_TYPE_POS = 7
-#     NAME_POS = 8
-#     CITY_POS = 9
-#     STATE_POS = 10
-#     ZIP_POS = 11
-#     EMPLOYER_POS = 12
-#     OCCUPATION_POS = 13
-#     TRAN_DATE_POS = 14
-#     TRAN_AMOUNT_POS = 15
-#     OTHER_ID_POS = 16 # For contributions from individuals this column is null
-#     TRAN_ID_POS = 17
-#     FILE_NUM_POS = 18
-#     MEMO_CODE_POS = 19
-#     MEMO_TEXT_POS = 20
-#     SUB_ID_POS = 21 #FEC Record Number
-#
-#     # # Connect to the database
-#     # conn = connect()
-#     # cur = conn.cursor()
-#     # cur.execute("DROP TABLE IF EXISTS INDIVIDUAL;")
-#     # cur.execute('''CREATE TABLE INDIVIDUAL
-#     #       (COMMITTEE_ID           CHAR(9)  		     	NOT NULL,
-#     #       AMNDT_IND                 CHAR(1),
-#     #       REPORT_TYPE               CHAR(3),
-#     #       TRAN_PGI                  CHAR(5),
-#     #       IMAGE_NUM                 CHAR(18),
-#     #       TRAN_TYPE                 CHAR(3),
-#     #       ENTITY_TYPE               CHAR(3),
-#     #       NAME                      TEXT	     			NOT NULL,
-#     #       CITY                      TEXT	     			NOT NULL,
-#     #       STATE                     CHAR(2)	     			NOT NULL,
-#     #       ZIP                       CHAR(9)	     			NOT NULL,
-#     #       EMPLOYER                  TEXT,
-#     #       OCCUPATION                TEXT,
-#     #       TRAN_DATE		    		DATE,
-#     #       TRAN_AMOUNT				NUMERIC(14,2),
-#     #       OTHER_ID                  CHAR(9),
-#     #       TRAN_ID                   CHAR(32),
-#     #       FILE_NUM                  CHAR(22),
-#     #       MEMO_CODE                 CHAR(1),
-#     #       MEMO_TEXT                 CHAR(100),
-#     #       SUB_ID                    CHAR(19));''')
-#     # #           TRAN_DATE_AVAILABLE		NUMERIC(1,2)
-#     # print "Table created successfully"
-#     # conn.commit()
-#     # conn.close()
-#
-#     # Because the individual contribution file for 2016 is too large, we will process the lines one by one.
-#
-#     dateless_count = 0
-#     for path in paths:
-#         #election_cycle = path[len(path)-6:len(path)-4] # Assuming the path ends in format like ../indiv90.txt
-#         conn = connect()
-#         cur = conn.cursor()
-#
-#         individual = read_files(path)
-#         print "Files are read from ", path
-#         individual.insert(0, [])
-#
-#         for i in range(len(individual[1])):
-#             CMTE_ID = individual[CMTE_ID_POS][i]
-#             AMNDT_IND = individual[AMNDT_IND_POS][i]
-#             REPORT_TYPE = individual[REPORT_TYPE_POS][i]
-#             TRAN_PGI = individual[TRAN_PGI_POS][i]
-#             IMAGE_NUM = individual[IMAGE_NUM_POS][i]
-#             TRAN_TYPE = individual[TRAN_TYPE_POS][i]
-#             ENTITY_TYPE = individual[ENTITY_TYPE_POS][i]
-#             NAME = individual[NAME_POS][i]
-#             CITY = individual[CITY_POS][i]
-#             STATE = individual[STATE_POS][i]
-#             ZIP = individual[ZIP_POS][i]
-#             EMPLOYER = individual[EMPLOYER_POS][i]
-#             OCCUPATION = individual[OCCUPATION_POS][i]
-#
-#             if len(individual[TRAN_DATE_POS][i]) < 8:  # In case there is no data
-#                 dateless_count += 1
-#                 continue
-#             TRAN_DATE = str(individual[TRAN_DATE_POS][i][4:]) + '-' + \
-#                         str(individual[TRAN_DATE_POS][i][0:2]) + '-' + str(
-#                 individual[TRAN_DATE_POS][i][2:4])
-#
-#             TRAN_AMOUNT = individual[TRAN_AMOUNT_POS][i]
-#             OTHER_ID = individual[OTHER_ID_POS][i]
-#             TRAN_ID = individual[TRAN_ID_POS][i]
-#             FILE_NUM = individual[FILE_NUM_POS][i]
-#             MEMO_CODE = individual[MEMO_CODE_POS][i]
-#             MEMO_TEXT = individual[MEMO_TEXT_POS][i]
-#             SUB_ID = individual[SUB_ID_POS][i]
-#
-#             values_list = [CMTE_ID, AMNDT_IND, REPORT_TYPE, TRAN_PGI, IMAGE_NUM,
-#                            TRAN_TYPE, ENTITY_TYPE, NAME, CITY, STATE, ZIP, EMPLOYER,
-#                            OCCUPATION, TRAN_DATE, TRAN_AMOUNT, OTHER_ID, TRAN_ID,
-#                            FILE_NUM, MEMO_CODE, MEMO_TEXT, SUB_ID]
-#             query = "INSERT INTO INDIVIDUAL \
-#                 (COMMITTEE_ID,AMNDT_IND,REPORT_TYPE,TRAN_PGI,IMAGE_NUM,TRAN_TYPE,\
-#                 ENTITY_TYPE,NAME,CITY,STATE,ZIP,EMPLOYER,OCCUPATION,TRAN_DATE,TRAN_AMOUNT,\
-#                 OTHER_ID,TRAN_ID,FILE_NUM,MEMO_CODE,MEMO_TEXT,SUB_ID) \
-#                 VALUES (%s, %s, %s, %s, %s,\
-#                         %s, %s, %s, %s, %s,\
-#                         %s, %s, %s, %s, %s,\
-#                         %s, %s, %s, %s, %s,\
-#                         %s)"
-#
-#             print "About to execute values: ", values_list
-#             cur.execute(query, values_list)
-#             print "executed values:"
-#
-#             if i%100000 == 0:
-#                 print i
-#                 print "dateless count, ", dateless_count
-#
-#         conn.commit()
-#         conn.close()
-#         print "Insertion for the file completed: ", path
-
-
 def create_committee_candidate_contribution_table(paths):
 
     '''Create the Candidate Committee Contribution'''
@@ -504,7 +376,7 @@ def create_committee_candidate_contribution_table(paths):
     for path in paths:
         conn = connect()
         cur = conn.cursor()
-        committee_to_candidate = read_files([path])
+        committee_to_candidate = read_txt_files([path], "|")
         committee_to_candidate.insert(0, [])
         for i in range(len(committee_to_candidate[1])):
             COMMITTEE_ID = committee_to_candidate[COMMITTEE_ID_POS][i]
@@ -632,7 +504,7 @@ def create_committee_committee_table(paths):
     for path in paths:	
         conn = connect()
         cur = conn.cursor()
-        committee_to_committee = read_files([path])
+        committee_to_committee = read_txt_files([path], "|")
         committee_to_committee.insert(0, [])
 
         for i in range(len(committee_to_committee[1])):
@@ -762,6 +634,263 @@ def create_employer_table(paths):
     print "Employer table is created successfully"
 
 
+# Creates a corporate table with employer info from a csv file
+def create_occupation_soc_table(paths):
+
+    # Connect to the database
+    conn = connect()
+    cur = conn.cursor()
+
+    cur.execute("DROP TABLE IF EXISTS OCCUPATION_SOC;")
+    cur.execute('''CREATE TABLE OCCUPATION_SOC
+          (OCCUPATION_ORIGINAL  CHAR(200)               NOT NULL,
+          OCCUPATION_CLEAN      CHAR(200)               NOT NULL,
+          SOC_CODE              CHAR(7)                 NOT NULL);''')
+    print "Table created successfully"
+
+    for path in paths:
+        print "Files are read from ", path
+        raw_lines = read_raw_lines([path])
+
+        ORIG_NAME_POS = 0
+        CLEAN_NAME_POS = 1
+        SOC_CODE_POS = 3
+
+        rows_with_issues = 0
+        for i in range(len(raw_lines)):
+            line_raw = raw_lines[i]
+            row = line_raw.split("\t")
+            print row
+
+            # Remove the ones that are just ''
+            j = 0
+            while j < len(row):
+                if row[j] == '':
+                    row.pop(j)
+                    j -=1
+                j += 1
+
+            row = [elem.strip() for elem in row]
+            if len(row) > 5:
+                rows_with_issues += 1
+                row = [row[ORIG_NAME_POS], row[CLEAN_NAME_POS], row[-2]]
+            elif len(row) < 5:
+                rows_with_issues += 1
+                row = [row[ORIG_NAME_POS], row[CLEAN_NAME_POS], row[-2]]
+            else:
+                row = [row[ORIG_NAME_POS], row[CLEAN_NAME_POS], row[SOC_CODE_POS]]
+
+            query = "INSERT INTO OCCUPATION_SOC (OCCUPATION_ORIGINAL,OCCUPATION_CLEAN,SOC_CODE) \
+                VALUES (%s, %s, %s)"
+            print row
+            cur.execute(query, row)
+
+    conn.commit()
+    conn.close()
+    print "occupation_soc table is created successfully"
+    print "rows with issues: ", rows_with_issues
+
+
+# Creates a corporate table with employer info from a csv file
+def create_occupation_soc_onet_table(paths):
+
+    # Connect to the database
+    conn = connect()
+    cur = conn.cursor()
+
+    cur.execute("DROP TABLE IF EXISTS OCCUPATION_SOC_ONET;")
+    cur.execute('''CREATE TABLE OCCUPATION_SOC_ONET
+          (OCCUPATION_ORIGINAL  CHAR(200)               NOT NULL,
+          OCCUPATION_CLEAN      CHAR(200)               NOT NULL,
+          SOC_ONET_CODE          CHAR(10)              NOT NULL);''')
+    print "Table created successfully"
+
+    for path in paths:
+        print "Files are read from ", path
+        raw_lines = read_raw_lines([path])
+
+        ORIG_NAME_POS = 0
+        CLEAN_NAME_POS = 1
+        SOC_ONET_CODE_POS = 3
+
+        rows_with_issues = 0
+        for i in range(len(raw_lines)):
+            line_raw = raw_lines[i]
+            row = line_raw.split("\t")
+            print row
+
+            # Remove the ones that are just ''
+            j = 0
+            while j < len(row):
+                if row[j] == '':
+                    row.pop(j)
+                    j -=1
+                j += 1
+
+            row = [elem.strip() for elem in row]
+            if len(row) > 5:
+                rows_with_issues += 1
+                row = [row[ORIG_NAME_POS], row[CLEAN_NAME_POS], row[-2]]
+            elif len(row) < 5:
+                rows_with_issues += 1
+                row = [row[ORIG_NAME_POS], row[CLEAN_NAME_POS], row[-2]]
+            else:
+                row = [row[ORIG_NAME_POS], row[CLEAN_NAME_POS], row[SOC_ONET_CODE_POS]]
+
+            query = "INSERT INTO OCCUPATION_SOC_ONET (OCCUPATION_ORIGINAL,OCCUPATION_CLEAN,SOC_ONET_CODE) \
+                VALUES (%s, %s, %s)"
+            print row
+            cur.execute(query, row)
+
+    conn.commit()
+    conn.close()
+    print "occupation_soc_onet table is created successfully"
+    print "rows with issues: ", rows_with_issues #Only two rows with issues anyways!
+
+# This table includes an individual ID assignment,
+def create_individual_updated_table(paths):
+    '''Create the Individual Contribution Table'''
+
+    # Connect to the database
+    conn = connect()
+    cur = conn.cursor()
+    cur.execute("DROP TABLE IF EXISTS INDIVIDUAL_UPDATED;")
+    cur.execute('''CREATE TABLE INDIVIDUAL_UPDATED
+          (COMMITTEE_ID             CHAR(9)  		     	NOT NULL,
+          AMNDT_IND                 CHAR(1),
+          REPORT_TYPE               CHAR(3),
+          TRAN_PGI                  CHAR(5),
+          IMAGE_NUM                 CHAR(18),
+          TRAN_TYPE                 CHAR(3),
+          ENTITY_TYPE               CHAR(3),
+          INDIVIDUAL_ID             CHAR(9)                 NOT NULL,
+          ORIGINAL_NAME             TEXT	     			NOT NULL,
+          FULL_NAME                 TEXT,
+          FIRST_NAME                TEXT,
+          LAST_NAME                 TEXT,
+          CITY                      TEXT,
+          STATE                     CHAR(2),
+          ZIP                       CHAR(9),
+          EMPLOYER                  TEXT,
+          OCCUPATION                TEXT,
+          TRAN_DATE		    		DATE,
+          TRAN_AMOUNT				NUMERIC(14,2),
+          OTHER_ID                  CHAR(9),
+          TRAN_ID                   CHAR(32),
+          FILE_NUM                  CHAR(22),
+          MEMO_CODE                 CHAR(1),
+          MEMO_TEXT                 CHAR(100),
+          SUB_ID                    CHAR(19));''')
+    #           TRAN_DATE_AVAILABLE		NUMERIC(1,2)
+    print "Table created successfully"
+
+    dateless_count = 0
+    individual_id_count = 1 # We will create individual ids with this count
+
+    for path in paths:
+        # election_cycle = path[len(path)-6:len(path)-4] # Assuming the path ends in format like ../indiv90.txt
+        cur = conn.cursor()
+
+        print "Files are read from ", path
+        raw_lines = read_raw_lines([path])
+
+        for ix in range(len(raw_lines)):
+            line_raw = raw_lines[ix]
+            row = line_raw.split("|")
+            row = [elem.strip() for elem in row]
+
+            ENTITY_TYPE_IDX = 6
+            INDIVIDUAL_ID_IDX = 7
+            ORIGINAL_NAME_IDX = 8
+            FULL_NAME_IDX = 9
+            FIST_NAME_IDX = 10
+            LAST_NAME_IDX = 11
+            TRAN_DATE_IDX = 17  # The position of transaction date on data
+
+            individual_id = ''
+            full_name = ''
+            first_name = ''
+            last_name = ''
+            row.insert(INDIVIDUAL_ID_IDX, individual_id)
+            row.insert(FULL_NAME_IDX, full_name)
+            row.insert(FIST_NAME_IDX, first_name)
+            row.insert(LAST_NAME_IDX, last_name)
+
+            entity_type = row[ENTITY_TYPE_IDX]
+
+            # In cases when it is an individual
+            original_name = row[ORIGINAL_NAME_IDX]
+            if (entity_type == 'IND' or entity_type == '') and original_name != '':
+                individual_id = format(individual_id_count, '08d')
+                individual_id = 'I' + individual_id
+                row[INDIVIDUAL_ID_IDX] = individual_id
+                individual_id_count += 1
+
+                name_split = original_name.split('.')
+                name = ''.join(name_split)
+
+                r = re.compile('MR|MRS|MS|MISS|MD|JD|PHD|LCC')  # First remove initials
+                name_split = name.split(' ')
+                name_filtered = filter(lambda x: len(filter(r.match, [x])) == 0, name_split)
+                name = ' '.join(name_filtered)
+
+                name_split = name.split(', ')  # 'Last_name, First_name' or "First_name Last_name" case
+                if len(name_split) > 1:
+                    last_name = name_split.pop(0)
+                elif len(name.split(' ')) > 1:
+                    name_split = name.split(' ')
+                    last_name = name_split.pop(-1)
+
+                first_name = ' '.join(name_split)
+                first_name_split = first_name.split('.|,|!|\\"|?')  # Remove extra punctuation ,
+                first_name = ' '.join(first_name_split)
+                first_name = first_name.strip(' ')
+
+                last_name_split = last_name.split(',')
+                last_name = ' '.join(last_name_split)
+                last_name = last_name.strip(' ')
+
+                full_name = first_name + ' ' + last_name
+
+            row[FULL_NAME_IDX] = full_name
+            row[FIST_NAME_IDX] = first_name
+            row[LAST_NAME_IDX] = last_name
+
+            if len(row[TRAN_DATE_IDX]) < 8:  # In case there is no data
+                print "no transaction date, ", row[TRAN_DATE_IDX]
+                dateless_count += 1
+                continue
+
+            row[TRAN_DATE_IDX] = str(row[TRAN_DATE_IDX][4:]) + '-' + \
+                                 str(row[TRAN_DATE_IDX][0:2]) + '-' + \
+                                 str(row[TRAN_DATE_IDX][2:4])
+
+            query = "INSERT INTO INDIVIDUAL_UPDATED \
+                (COMMITTEE_ID, AMNDT_IND, REPORT_TYPE, TRAN_PGI, IMAGE_NUM, \
+                TRAN_TYPE, ENTITY_TYPE, INDIVIDUAL_ID, ORIGINAL_NAME, FULL_NAME, \
+                FIRST_NAME, LAST_NAME, CITY, STATE,ZIP, \
+                EMPLOYER, OCCUPATION,TRAN_DATE,TRAN_AMOUNT, OTHER_ID, \
+                TRAN_ID, FILE_NUM, MEMO_CODE, MEMO_TEXT, SUB_ID) \
+                VALUES (%s, %s, %s, %s, %s,\
+                        %s, %s, %s, %s, %s,\
+                        %s, %s, %s, %s, %s,\
+                        %s, %s, %s, %s, %s,\
+                        %s, %s, %s, %s, %s)"
+            cur.execute(query, row)
+
+            if ix % 100000 == 0:
+                print ix
+                print "dateless count, ", dateless_count
+                print individual_id
+                print row
+
+            # print ix
+
+        print "Insertion for the file completed: ", path
+
+    conn.commit()
+    conn.close()
+
 # #Creating Tables
 # candidate_paths = [(data_dir + 'cn' + str(i)[2:] + '.txt') for i in range(1980, 2020, 2)]
 # create_candidate_table(candidate_paths)
@@ -781,5 +910,14 @@ def create_employer_table(paths):
 # corporate_path = '../data' + '/corporate.csv'
 # create_corporate_table([corp_pac_path])
 
-employer_path = '../data' + '/empl_1980_2014_gvkey_match_fixed.csv'
-create_employer_table([employer_path])
+# employer_path = '../data' + '/empl_1980_2014_gvkey_match_clean.csv'
+# create_employer_table([employer_path])
+
+# occupation_soc_path = '../data' + '/fec_occ_soc_2016.txt'
+# create_occupation_soc_table([occupation_soc_path])
+
+# occupation_soc_ocnet_path = '../data' + '/fec_occ_soc_onet_2016.txt'
+# create_occupation_soc_onet_table([occupation_soc_ocnet_path])
+
+individual_paths = [(data_dir + 'indiv' + str(i)[2:] + '.txt') for i in range(1980, 2020, 2)]
+create_individual_updated_table(individual_paths)
